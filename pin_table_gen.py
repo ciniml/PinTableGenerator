@@ -4,15 +4,15 @@ import svgwrite
 def __conv_to_svg_color(color: Union[int,str]) -> str:
     return f'#{color:06X}' if type(color) == 'int' else color
 
-def generate_pin_map_svg(pin_map: Tuple[Tuple[str]], pin_definitions: Dict[str, Dict[str, str]], pin_type_colors: Dict[str, int], usage_type_colors: Dict[str, int], column_width:int = 120, usage_column_width:int = 80, row_height = 20) -> svgwrite.Drawing:
+def generate_pin_map_svg(pin_map: Tuple[Tuple[str]], pin_definitions: Dict[str, Dict[str, str]], pin_type_colors: Dict[str, int], usage_type_colors: Dict[str, int], column_width:int = 120, usage_column_width:int = 80, row_height = 20, column_spacing = 0) -> svgwrite.Drawing:
     drawing = svgwrite.Drawing()
 
     for row_index, row in enumerate(pin_map):
         y = row_height * row_index
         for column_index, pin in enumerate(row):
-            x = column_width * column_index
+            x = (column_width + column_spacing) * column_index
             if pin == "": continue  # Skip blank pin
-             
+
             pin_definition = pin_definitions.get(pin, {'type': 'normal'})
             pin_type = pin_definition['type']
             pin_usage = pin_definition.get('usage')
@@ -64,6 +64,7 @@ if __name__ == '__main__':
     parser.add_option('-o', "--output", dest="output_file", help="output file name", metavar="OUTPUT")
     parser.add_option("--column_width", type="int", dest="column_width", help="column width of the table", metavar="COLUMN_WIDTH", default=120)
     parser.add_option("--usage_column_width", type="int", dest="usage_column_width", help="column width of the table for the usage cell", metavar="USAGE_COLUMN_WIDTH", default=80)
+    parser.add_option("--column_spacing", type="int", dest="column_spacing", help="space between columns", metavar="COLUMN_SPACING", default=0)
     parser.add_option('--row_height', type="int", dest="row_height", help="row height of the table", metavar="ROW_HEIGHT", default=20)
     (option, args) = parser.parse_args()
     if len(args) < 2:
@@ -80,6 +81,7 @@ if __name__ == '__main__':
     optional_args = {}
     optional_args['column_width'] = option.column_width
     optional_args['usage_column_width'] = option.usage_column_width
+    optional_args['column_spacing'] = option.column_spacing
     optional_args['row_height'] = option.row_height
     
     drawing = generate_pin_map_svg_from_json(def_json_path, color_json_path, **optional_args)
