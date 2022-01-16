@@ -4,10 +4,6 @@ from typing import Tuple, Dict
 def generate_pin_map_svg(pin_map: Tuple[Tuple[str]], pin_definitions: Dict[str, Dict[str, str]], pin_type_colors: Dict[str, int], usage_type_colors: Dict[str, int], column_width:int = 120, column_usage_width:int = 80, row_height = 20) -> svgwrite.Drawing:
     drawing = svgwrite.Drawing()
 
-    column_width = 120
-    column_usage_width = 80
-    row_height = 20
-
     y = 0
     for row_index, row in enumerate(pin_map):
         y = row_height * row_index
