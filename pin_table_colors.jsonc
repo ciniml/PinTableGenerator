@@ -1,6 +1,6 @@
 {
     "pin_type_colors": {
-        "gnd": ["#000000", "#ffffff"],
+        "gnd": ["black", "white"],
         "3v3": ["#c00000", "#ffffff"],
         "5v":  ["#c00000", "#ffffff"],
         "bat": ["#c0c000", "#000000"],

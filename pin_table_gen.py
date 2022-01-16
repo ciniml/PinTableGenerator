@@ -1,5 +1,8 @@
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Union
 import svgwrite
+
+def __conv_to_svg_color(color: Union[int,str]) -> str:
+    return f'#{color:06X}' if type(color) == 'int' else color
 
 def generate_pin_map_svg(pin_map: Tuple[Tuple[str]], pin_definitions: Dict[str, Dict[str, str]], pin_type_colors: Dict[str, int], usage_type_colors: Dict[str, int], column_width:int = 120, column_usage_width:int = 80, row_height = 20) -> svgwrite.Drawing:
     drawing = svgwrite.Drawing()
@@ -12,9 +15,9 @@ def generate_pin_map_svg(pin_map: Tuple[Tuple[str]], pin_definitions: Dict[str, 
             pin_type = pin_definition['type']
             pin_usage = pin_definition.get('usage')
             pin_usage_type = pin_definition.get('usage_type')
-            pin_color = pin_type_colors.get(pin_type, (0x000000, 0xffffff))
-            fill = f'#{pin_color[0]:06X}'
-            text_color = f'#{pin_color[1]:06X}'
+            pin_color = pin_type_colors.get(pin_type, ('black', 'white'))
+            fill = __conv_to_svg_color(pin_color[0])
+            text_color = __conv_to_svg_color(pin_color[1])
 
             if pin_usage is None:
                 rect = drawing.rect(insert=(x, y), size=(column_width, row_height), fill=fill)
@@ -32,8 +35,8 @@ def generate_pin_map_svg(pin_map: Tuple[Tuple[str]], pin_definitions: Dict[str, 
                 drawing.add(text)
 
                 usage_color = usage_type_colors[pin_usage_type]
-                usage_fill = f'#{usage_color[0]:06X}'
-                usage_text_color = f'#{usage_color[1]:06X}'
+                usage_fill = __conv_to_svg_color(usage_color[0])
+                usage_text_color = __conv_to_svg_color(usage_color[1])
                 rect = drawing.rect(insert=(usage_start_x, y), size=(column_usage_width, row_height), fill=usage_fill)
                 drawing.add(rect)
                 text = drawing.text(pin_usage, insert=(usage_start_x+column_usage_width/2, y+row_height/2), style='text-anchor:middle; dominant-baseline:central', fill=usage_text_color)
@@ -47,17 +50,6 @@ def generate_pin_map_svg_from_json(def_json_path: str, color_json_path: str) -> 
         definitions = json5.load(f)
     with open(color_json_path, 'r') as f:
         colors = json5.load(f)
-    
-    for key in colors['pin_type_colors'].keys():
-        color_pair = colors['pin_type_colors'][key] # type: str
-        bg = int(color_pair[0][1:], base=16)
-        fg = int(color_pair[1][1:], base=16)
-        colors['pin_type_colors'][key] = (bg, fg)
-    for key in colors['usage_type_colors'].keys():
-        color_pair = colors['usage_type_colors'][key] # type: str
-        bg = int(color_pair[0][1:], base=16)
-        fg = int(color_pair[1][1:], base=16)
-        colors['usage_type_colors'][key] = (bg, fg)
     
     return generate_pin_map_svg(definitions['pin_map'], definitions['pin_definitions'], colors['pin_type_colors'], colors['usage_type_colors']) 
 
