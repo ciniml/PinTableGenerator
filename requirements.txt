@@ -1,0 +1,2 @@
+json5 >= 0.9
+svgwrite >= 1.4

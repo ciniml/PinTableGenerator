@@ -1,5 +1,5 @@
-import svgwrite
 from typing import Tuple, Dict
+import svgwrite
 
 def generate_pin_map_svg(pin_map: Tuple[Tuple[str]], pin_definitions: Dict[str, Dict[str, str]], pin_type_colors: Dict[str, int], usage_type_colors: Dict[str, int], column_width:int = 120, column_usage_width:int = 80, row_height = 20) -> svgwrite.Drawing:
     drawing = svgwrite.Drawing()
@@ -40,3 +40,29 @@ def generate_pin_map_svg(pin_map: Tuple[Tuple[str]], pin_definitions: Dict[str, 
                 drawing.add(text)
 
     return drawing
+
+def generate_pin_map_svg_from_json(def_json_path: str, color_json_path: str) -> svgwrite.Drawing:
+    import json5
+    with open(def_json_path, 'r') as f:
+        definitions = json5.load(f)
+    with open(color_json_path, 'r') as f:
+        colors = json5.load(f)
+    
+    for key in colors['pin_type_colors'].keys():
+        color_pair = colors['pin_type_colors'][key] # type: str
+        bg = int(color_pair[0][1:], base=16)
+        fg = int(color_pair[1][1:], base=16)
+        colors['pin_type_colors'][key] = (bg, fg)
+    for key in colors['usage_type_colors'].keys():
+        color_pair = colors['usage_type_colors'][key] # type: str
+        bg = int(color_pair[0][1:], base=16)
+        fg = int(color_pair[1][1:], base=16)
+        colors['usage_type_colors'][key] = (bg, fg)
+    
+    return generate_pin_map_svg(definitions['pin_map'], definitions['pin_definitions'], colors['pin_type_colors'], colors['usage_type_colors']) 
+
+if __name__ == '__main__':
+    import sys
+
+    drawing = generate_pin_map_svg_from_json(sys.argv[1], sys.argv[2])
+    drawing.saveas(sys.argv[3])
