@@ -4,7 +4,7 @@ import svgwrite
 def __conv_to_svg_color(color: Union[int,str]) -> str:
     return f'#{color:06X}' if type(color) == 'int' else color
 
-def generate_pin_map_svg(pin_map: Tuple[Tuple[str]], pin_definitions: Dict[str, Dict[str, str]], pin_type_colors: Dict[str, int], usage_type_colors: Dict[str, int], column_width:int = 120, column_usage_width:int = 80, row_height = 20) -> svgwrite.Drawing:
+def generate_pin_map_svg(pin_map: Tuple[Tuple[str]], pin_definitions: Dict[str, Dict[str, str]], pin_type_colors: Dict[str, int], usage_type_colors: Dict[str, int], column_width:int = 120, usage_column_width:int = 80, row_height = 20) -> svgwrite.Drawing:
     drawing = svgwrite.Drawing()
 
     for row_index, row in enumerate(pin_map):
@@ -25,9 +25,9 @@ def generate_pin_map_svg(pin_map: Tuple[Tuple[str]], pin_definitions: Dict[str, 
                 text = drawing.text(pin, insert=(x+column_width/2, y+row_height/2), style='text-anchor:middle; dominant-baseline:central', fill=text_color)
                 drawing.add(text)
             else:
-                pin_start_x = x if column_index == 0 else x + column_usage_width
-                pin_column_width = column_width - column_usage_width
-                usage_start_x = x + column_width - column_usage_width if column_index == 0 else x
+                pin_start_x = x if column_index == 0 else x + usage_column_width
+                pin_column_width = column_width - usage_column_width
+                usage_start_x = x + column_width - usage_column_width if column_index == 0 else x
 
                 rect = drawing.rect(insert=(pin_start_x, y), size=(pin_column_width, row_height), fill=fill)
                 drawing.add(rect)
@@ -37,9 +37,9 @@ def generate_pin_map_svg(pin_map: Tuple[Tuple[str]], pin_definitions: Dict[str, 
                 usage_color = usage_type_colors[pin_usage_type]
                 usage_fill = __conv_to_svg_color(usage_color[0])
                 usage_text_color = __conv_to_svg_color(usage_color[1])
-                rect = drawing.rect(insert=(usage_start_x, y), size=(column_usage_width, row_height), fill=usage_fill)
+                rect = drawing.rect(insert=(usage_start_x, y), size=(usage_column_width, row_height), fill=usage_fill)
                 drawing.add(rect)
-                text = drawing.text(pin_usage, insert=(usage_start_x+column_usage_width/2, y+row_height/2), style='text-anchor:middle; dominant-baseline:central', fill=usage_text_color)
+                text = drawing.text(pin_usage, insert=(usage_start_x+usage_column_width/2, y+row_height/2), style='text-anchor:middle; dominant-baseline:central', fill=usage_text_color)
                 drawing.add(text)
 
     return drawing
@@ -60,6 +60,9 @@ if __name__ == '__main__':
     parser = OptionParser()
     parser.set_usage("pin_table_gen.py DEF_JSON COLOR_JSON [options]")
     parser.add_option('-o', "--output", dest="output_file", help="output file name", metavar="OUTPUT")
+    parser.add_option("--column_width", type="int", dest="column_width", help="column width of the table", metavar="COLUMN_WIDTH", default=120)
+    parser.add_option("--usage_column_width", type="int", dest="usage_column_width", help="column width of the table for the usage cell", metavar="USAGE_COLUMN_WIDTH", default=80)
+    parser.add_option('--row_height', type="int", dest="row_height", help="row height of the table", metavar="ROW_HEIGHT", default=20)
     (option, args) = parser.parse_args()
     if len(args) < 2:
         parser.print_help()
@@ -67,5 +70,15 @@ if __name__ == '__main__':
     def_json_path = args[0]
     color_json_path = args[1]
     output_path = os.path.splitext(args[0])[0] + '.svg' if option.output_file is None else option.output_file
-    drawing = generate_pin_map_svg_from_json(def_json_path, color_json_path)
+    
+    if option.column_width <= option.usage_column_width:
+        print("Error: COLUMN_WIDTH must be wider than USAGE_COLUMN_WIDTH", file=sys.stderr)
+        sys.exit(1)
+    
+    optional_args = {}
+    optional_args['column_width'] = option.column_width
+    optional_args['usage_column_width'] = option.usage_column_width
+    optional_args['row_height'] = option.row_height
+    
+    drawing = generate_pin_map_svg_from_json(def_json_path, color_json_path, **optional_args)
     drawing.saveas(output_path)
