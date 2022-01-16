@@ -10,10 +10,14 @@ def __conv_to_svg_color(color: Union[int,str]) -> str:
     return f'#{color:06X}' if type(color) == 'int' else color
 
 def generate_pin_map_svg(pin_map: Tuple[Tuple[str]], pin_definitions: Dict[str, Dict[str, str]], pin_type_colors: Dict[str, int], usage_type_colors: Dict[str, int], pin_name_column_width:int = 40, usage_column_width:int = 80, row_height = 20, column_spacing = 0, span_pin_name_without_usage:bool = True) -> svgwrite.Drawing:
-    drawing = svgwrite.Drawing()
-
     column_width = pin_name_column_width + usage_column_width
-
+    
+    number_of_columns = len(pin_map[0])
+    number_of_rows = len(pin_map)
+    total_width = (column_width + column_spacing) * number_of_columns - column_spacing
+    total_height = row_height * number_of_rows
+    drawing = svgwrite.Drawing(size=(total_width, total_height))
+    
     for row_index, row in enumerate(pin_map):
         y = row_height * row_index
         for column_index, pin in enumerate(row):
