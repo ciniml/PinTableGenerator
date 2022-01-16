@@ -1,0 +1,21 @@
+{
+    "pin_definitions": {
+        "GND": {"type": "gnd"},
+        "3V3": {"type": "3v3"},
+        "5V":  {"type": "5v"},
+
+        "G22": {"type": "normal"},
+        "G19": {"type": "normal"},
+        "G23": {"type": "normal"},
+        "G33": {"type": "normal"},
+        "G21": {"type": "normal", "usage":"SCL", "usage_type": "I2C"},
+        "G25": {"type": "normal", "usage":"SDA", "usage_type": "I2C"},
+    },
+    "pin_map": [
+        ["3V3",  ""],
+        ["G22",  "G21"],
+        ["G19",  "G25"],
+        ["G23",  "5V"],
+        ["G33",  "GND"],
+    ],
+}

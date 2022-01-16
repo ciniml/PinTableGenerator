@@ -11,6 +11,8 @@ def generate_pin_map_svg(pin_map: Tuple[Tuple[str]], pin_definitions: Dict[str, 
         y = row_height * row_index
         for column_index, pin in enumerate(row):
             x = column_width * column_index
+            if pin == "": continue  # Skip blank pin
+             
             pin_definition = pin_definitions.get(pin, {'type': 'normal'})
             pin_type = pin_definition['type']
             pin_usage = pin_definition.get('usage')
@@ -74,7 +76,7 @@ if __name__ == '__main__':
     if option.column_width <= option.usage_column_width:
         print("Error: COLUMN_WIDTH must be wider than USAGE_COLUMN_WIDTH", file=sys.stderr)
         sys.exit(1)
-    
+
     optional_args = {}
     optional_args['column_width'] = option.column_width
     optional_args['usage_column_width'] = option.usage_column_width
