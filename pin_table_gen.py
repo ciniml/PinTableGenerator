@@ -44,17 +44,28 @@ def generate_pin_map_svg(pin_map: Tuple[Tuple[str]], pin_definitions: Dict[str, 
 
     return drawing
 
-def generate_pin_map_svg_from_json(def_json_path: str, color_json_path: str) -> svgwrite.Drawing:
+def generate_pin_map_svg_from_json(def_json_path: str, color_json_path: str, **kwargs) -> svgwrite.Drawing:
     import json5
     with open(def_json_path, 'r') as f:
         definitions = json5.load(f)
     with open(color_json_path, 'r') as f:
         colors = json5.load(f)
     
-    return generate_pin_map_svg(definitions['pin_map'], definitions['pin_definitions'], colors['pin_type_colors'], colors['usage_type_colors']) 
+    return generate_pin_map_svg(definitions['pin_map'], definitions['pin_definitions'], colors['pin_type_colors'], colors['usage_type_colors'], **kwargs) 
 
 if __name__ == '__main__':
     import sys
-
-    drawing = generate_pin_map_svg_from_json(sys.argv[1], sys.argv[2])
-    drawing.saveas(sys.argv[3])
+    import os
+    from optparse import OptionParser
+    parser = OptionParser()
+    parser.set_usage("pin_table_gen.py DEF_JSON COLOR_JSON [options]")
+    parser.add_option('-o', "--output", dest="output_file", help="output file name", metavar="OUTPUT")
+    (option, args) = parser.parse_args()
+    if len(args) < 2:
+        parser.print_help()
+        sys.exit(1)
+    def_json_path = args[0]
+    color_json_path = args[1]
+    output_path = os.path.splitext(args[0])[0] + '.svg' if option.output_file is None else option.output_file
+    drawing = generate_pin_map_svg_from_json(def_json_path, color_json_path)
+    drawing.saveas(output_path)
