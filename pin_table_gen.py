@@ -4,8 +4,10 @@ import svgwrite
 def __conv_to_svg_color(color: Union[int,str]) -> str:
     return f'#{color:06X}' if type(color) == 'int' else color
 
-def generate_pin_map_svg(pin_map: Tuple[Tuple[str]], pin_definitions: Dict[str, Dict[str, str]], pin_type_colors: Dict[str, int], usage_type_colors: Dict[str, int], column_width:int = 120, usage_column_width:int = 80, row_height = 20, column_spacing = 0) -> svgwrite.Drawing:
+def generate_pin_map_svg(pin_map: Tuple[Tuple[str]], pin_definitions: Dict[str, Dict[str, str]], pin_type_colors: Dict[str, int], usage_type_colors: Dict[str, int], pin_name_column_width:int = 40, usage_column_width:int = 80, row_height = 20, column_spacing = 0, span_pin_name_without_usage:bool = True) -> svgwrite.Drawing:
     drawing = svgwrite.Drawing()
+
+    column_width = pin_name_column_width + usage_column_width
 
     for row_index, row in enumerate(pin_map):
         y = row_height * row_index
@@ -20,22 +22,17 @@ def generate_pin_map_svg(pin_map: Tuple[Tuple[str]], pin_definitions: Dict[str, 
             pin_color = pin_type_colors.get(pin_type, ('black', 'white'))
             fill = __conv_to_svg_color(pin_color[0])
             text_color = __conv_to_svg_color(pin_color[1])
+            
+            span_pin_cell = span_pin_name_without_usage and pin_usage is None
+            pin_name_cell_width = column_width if span_pin_cell else pin_name_column_width
+            pin_start_x = x if column_index == 0 or span_pin_cell else x + usage_column_width
+            rect = drawing.rect(insert=(pin_start_x, y), size=(pin_name_cell_width, row_height), fill=fill)
+            drawing.add(rect)
+            text = drawing.text(pin, insert=(pin_start_x+pin_name_cell_width/2, y+row_height/2), style='text-anchor:middle; dominant-baseline:central', fill=text_color)
+            drawing.add(text)
 
-            if pin_usage is None:
-                rect = drawing.rect(insert=(x, y), size=(column_width, row_height), fill=fill)
-                drawing.add(rect)
-                text = drawing.text(pin, insert=(x+column_width/2, y+row_height/2), style='text-anchor:middle; dominant-baseline:central', fill=text_color)
-                drawing.add(text)
-            else:
-                pin_start_x = x if column_index == 0 else x + usage_column_width
-                pin_column_width = column_width - usage_column_width
-                usage_start_x = x + column_width - usage_column_width if column_index == 0 else x
-
-                rect = drawing.rect(insert=(pin_start_x, y), size=(pin_column_width, row_height), fill=fill)
-                drawing.add(rect)
-                text = drawing.text(pin, insert=(pin_start_x+pin_column_width/2, y+row_height/2), style='text-anchor:middle; dominant-baseline:central', fill=text_color)
-                drawing.add(text)
-
+            if pin_usage is not None:
+                usage_start_x = x + pin_name_column_width if column_index == 0 else x
                 usage_color = usage_type_colors[pin_usage_type]
                 usage_fill = __conv_to_svg_color(usage_color[0])
                 usage_text_color = __conv_to_svg_color(usage_color[1])
@@ -62,10 +59,11 @@ if __name__ == '__main__':
     parser = OptionParser()
     parser.set_usage("pin_table_gen.py DEF_JSON COLOR_JSON [options]")
     parser.add_option('-o', "--output", dest="output_file", help="output file name", metavar="OUTPUT")
-    parser.add_option("--column_width", type="int", dest="column_width", help="column width of the table", metavar="COLUMN_WIDTH", default=120)
+    parser.add_option("--pin_name_column_width", type="int", dest="pin_name_column_width", help="column width of the pin width column", metavar="PIN_NAME_COLUMN_WIDTH", default=40)
     parser.add_option("--usage_column_width", type="int", dest="usage_column_width", help="column width of the table for the usage cell", metavar="USAGE_COLUMN_WIDTH", default=80)
     parser.add_option("--column_spacing", type="int", dest="column_spacing", help="space between columns", metavar="COLUMN_SPACING", default=0)
     parser.add_option('--row_height', type="int", dest="row_height", help="row height of the table", metavar="ROW_HEIGHT", default=20)
+    parser.add_option('--span_pin_name_without_usage', dest="span_pin_name_without_usage", help="spans pin name column if the pin does not define any usages.", default=False, action="store_true")
     (option, args) = parser.parse_args()
     if len(args) < 2:
         parser.print_help()
@@ -73,16 +71,13 @@ if __name__ == '__main__':
     def_json_path = args[0]
     color_json_path = args[1]
     output_path = os.path.splitext(args[0])[0] + '.svg' if option.output_file is None else option.output_file
-    
-    if option.column_width <= option.usage_column_width:
-        print("Error: COLUMN_WIDTH must be wider than USAGE_COLUMN_WIDTH", file=sys.stderr)
-        sys.exit(1)
 
     optional_args = {}
-    optional_args['column_width'] = option.column_width
+    optional_args['pin_name_column_width'] = option.pin_name_column_width
     optional_args['usage_column_width'] = option.usage_column_width
     optional_args['column_spacing'] = option.column_spacing
     optional_args['row_height'] = option.row_height
+    optional_args['span_pin_name_without_usage'] = option.span_pin_name_without_usage
     
     drawing = generate_pin_map_svg_from_json(def_json_path, color_json_path, **optional_args)
     drawing.saveas(output_path)
