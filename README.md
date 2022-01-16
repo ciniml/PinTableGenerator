@@ -8,11 +8,19 @@
 pip3 install --user -r requirements.txt
 ```
 
-生成 (pin_def_core.svgが生成される)
+生成 
 
+
+* サンプルのM5Stack CORE用定義 (ピン用途が定義されていない部分は列結合する)
 
 ```
-python3 pin_table_gen.py pin_def_core.jsonc pin_table_colors.jsonc
+python3 pin_table_gen.py pin_def_core.jsonc pin_table_colors.jsonc --span_pin_name_without_usage
+```
+
+* サンプルのATOM MATRIX用定義 (ピン用途が定義されていない部分でも列結合しない)
+
+```
+python3 pin_table_gen.py pin_def_atom_matrix.jsonc pin_table_colors.jsonc
 ```
 
 ## ライセンス
