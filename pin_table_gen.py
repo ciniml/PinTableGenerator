@@ -1,3 +1,8 @@
+# Pin Table Generator
+# Copyright 2022 Kenta Ida
+# SPDX-License-Identifier: BSL-1.0
+#
+
 from typing import Tuple, Dict, Union
 import svgwrite
 
