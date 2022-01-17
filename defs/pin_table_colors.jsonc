@@ -1,4 +1,6 @@
 {
+    "default_border_color": "lightgray",
+    // [background, text, border(optional)]
     "pin_type_colors": {
         "gnd": ["black", "white"],
         "3v3": ["#c00000", "#ffffff"],
@@ -6,7 +8,7 @@
         "bat": ["#c0c000", "#000000"],
         "hpwr": ["#c0a000", "#000000"],
         "i2c": ["#003000", "#000000"],
-        "input_only": ["#005000", "#000000"],
+        "input_only": ["#005000", "#000000", "red"],
         "misc": ["#c0c0c0", "#000000"],
         "normal": ["#ffffff", "#000000"],
     },

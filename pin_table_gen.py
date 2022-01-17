@@ -3,13 +3,13 @@
 # SPDX-License-Identifier: BSL-1.0
 #
 
-from typing import Tuple, Dict, Union
+from typing import Tuple, Dict, Union, Optional
 import svgwrite
 
 def __conv_to_svg_color(color: Union[int,str]) -> str:
     return f'#{color:06X}' if type(color) == 'int' else color
 
-def generate_pin_map_svg(pin_map: Tuple[Tuple[str]], pin_definitions: Dict[str, Dict[str, str]], pin_type_colors: Dict[str, int], usage_type_colors: Dict[str, int], pin_name_column_width:int = 40, usage_column_width:int = 80, row_height = 20, column_spacing = 0, span_pin_name_without_usage:bool = True) -> svgwrite.Drawing:
+def generate_pin_map_svg(pin_map: Tuple[Tuple[str]], pin_definitions: Dict[str, Dict[str, str]], pin_type_colors: Dict[str, int], usage_type_colors: Dict[str, int], pin_name_column_width:int = 40, usage_column_width:int = 80, row_height = 20, column_spacing = 0, span_pin_name_without_usage:bool = True, default_border_color:Optional[Union[str,int]] = None) -> svgwrite.Drawing:
     column_width = pin_name_column_width + usage_column_width
     
     number_of_columns = len(pin_map[0])
@@ -31,11 +31,15 @@ def generate_pin_map_svg(pin_map: Tuple[Tuple[str]], pin_definitions: Dict[str, 
             pin_color = pin_type_colors.get(pin_type, ('black', 'white'))
             fill = __conv_to_svg_color(pin_color[0])
             text_color = __conv_to_svg_color(pin_color[1])
+            border_color = __conv_to_svg_color(pin_color[2]) if len(pin_color) >= 3 else default_border_color
             
             span_pin_cell = span_pin_name_without_usage and pin_usage is None
             pin_name_cell_width = column_width if span_pin_cell else pin_name_column_width
             pin_start_x = x if column_index == 0 or span_pin_cell else x + usage_column_width
-            rect = drawing.rect(insert=(pin_start_x, y), size=(pin_name_cell_width, row_height), fill=fill)
+            rect_kwargs = {}
+            if border_color is not None:
+                rect_kwargs["stroke"] = border_color
+            rect = drawing.rect(insert=(pin_start_x, y), size=(pin_name_cell_width, row_height), fill=fill, **rect_kwargs)
             drawing.add(rect)
             text = drawing.text(pin, insert=(pin_start_x+pin_name_cell_width/2, y+row_height/2), style='text-anchor:middle; dominant-baseline:central', fill=text_color)
             drawing.add(text)
@@ -45,7 +49,12 @@ def generate_pin_map_svg(pin_map: Tuple[Tuple[str]], pin_definitions: Dict[str, 
                 usage_color = usage_type_colors[pin_usage_type]
                 usage_fill = __conv_to_svg_color(usage_color[0])
                 usage_text_color = __conv_to_svg_color(usage_color[1])
-                rect = drawing.rect(insert=(usage_start_x, y), size=(usage_column_width, row_height), fill=usage_fill)
+                usage_border_color = __conv_to_svg_color(usage_color[2]) if len(usage_color) >= 3 else default_border_color
+                
+                rect_kwargs = {}
+                if usage_border_color is not None:
+                    rect_kwargs["stroke"] = usage_border_color
+                rect = drawing.rect(insert=(usage_start_x, y), size=(usage_column_width, row_height), fill=usage_fill, **rect_kwargs)
                 drawing.add(rect)
                 text = drawing.text(pin_usage, insert=(usage_start_x+usage_column_width/2, y+row_height/2), style='text-anchor:middle; dominant-baseline:central', fill=usage_text_color)
                 drawing.add(text)
@@ -59,6 +68,8 @@ def generate_pin_map_svg_from_json(def_json_path: str, color_json_path: str, **k
     with open(color_json_path, 'r') as f:
         colors = json5.load(f)
     
+    if "default_border_color" not in kwargs and "default_border_color" in colors:
+        kwargs["default_border_color"] = colors["default_border_color"] 
     return generate_pin_map_svg(definitions['pin_map'], definitions['pin_definitions'], colors['pin_type_colors'], colors['usage_type_colors'], **kwargs) 
 
 if __name__ == '__main__':
